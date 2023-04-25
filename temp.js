@@ -3,7 +3,7 @@
 */
 
 /**
- * This is a sample action showcasing how to create a cloud event and publish to I/O Events
+ * This is a sample action showcasing how to access an external API
  *
  * Note:
  * You might want to disable authentication and authorization checks against Adobe Identity Management System for a generic action. In that case:
@@ -14,11 +14,8 @@
  */
 
 
-const { Core, Events } = require('@adobe/aio-sdk')
-const uuid = require('uuid')
-const {
-  CloudEvent
-} = require("cloudevents");
+const fetch = require('node-fetch')
+const { Core } = require('@adobe/aio-sdk')
 const { errorResponse, getBearerToken, stringParameters, checkMissingRequestInputs } = require('../utils')
 
 // main function that will be executed by Adobe I/O Runtime
@@ -34,8 +31,8 @@ async function main (params) {
     logger.debug(stringParameters(params))
 
     // check for missing request input parameters and headers
-    const requiredParams = ['apiKey', 'providerId', 'eventCode', 'payload']
-    const requiredHeaders = ['Authorization', 'x-gw-ims-org-id']
+    const requiredParams = [/* add required params */]
+    const requiredHeaders = []
     const errorMessage = checkMissingRequestInputs(params, requiredParams, requiredHeaders)
     if (errorMessage) {
       // return and log client errors
@@ -45,25 +42,26 @@ async function main (params) {
     // extract the user Bearer token from the Authorization header
     const token = getBearerToken(params)
 
-    
-    // initialize the client
-    const orgId = params.__ow_headers['x-gw-ims-org-id']
-    const eventsClient = await Events.init(orgId, params.apiKey, token)
+    // replace this with the api you want to access
+    const apiEndpoint = 'https://graph.adobe.io/api/72cf623c-e995-4792-a564-9c552a614b9a/graphql?api_key=6b6102eb15304ca6ab302ddc00213a4a'
 
-    // Create cloud event for the given payload
-    const cloudEvent = createCloudEvent(params.providerId, params.eventCode, params.payload)
-
-    // Publish to I/O Events
-    const published = await eventsClient.publishEvent(cloudEvent)
-    let statusCode = 200
-    if (published === 'OK') {
-      logger.info('Published successfully to I/O Events')
-    } else if (published === undefined) {
-      logger.info('Published to I/O Events but there were not interested registrations')
-      statusCode = 204
+    // fetch content from external api endpoint
+    const res = await fetch(apiEndpoint,{
+      method:"POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.query
+      }),
+    })
+    if (!res.ok) {
+      throw new Error('request to ' + apiEndpoint + ' failed with status code ' + res.status)
     }
+    const content = await res.json()
     const response = {
-      statusCode: statusCode,
+      statusCode: 200,
+      body: content
     }
 
     // log the response status code
@@ -77,14 +75,4 @@ async function main (params) {
   }
 }
 
-function createCloudEvent(providerId, eventCode, payload) {
-  let cloudevent = new CloudEvent({
-    source: 'urn:uuid:' + providerId,
-    type: eventCode,
-    datacontenttype: "application/json",
-    data: payload,
-    id: uuid.v4()
-  });
-  return cloudevent
-}
 exports.main = main
