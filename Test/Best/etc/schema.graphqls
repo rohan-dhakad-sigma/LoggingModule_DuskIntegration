@@ -1,0 +1,9 @@
+type Query{
+    test(
+        name: String! @doc(description: "enter name")
+    ): TestOutput @resolver(class: "Test\\Best\\Model\\Resolver\\AddLogs") @doc(description: "test resolver")
+}
+
+type TestOutput{
+    success: String @doc(description: "test output")
+}

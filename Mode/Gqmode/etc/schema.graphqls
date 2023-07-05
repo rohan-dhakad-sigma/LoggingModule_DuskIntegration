@@ -1,0 +1,14 @@
+type Query {
+    AddLogs @doc(description: "AddLogs Input") (
+    event_name: String! @doc(description: "Event Name")
+    api_endpoint: String! @doc(description: "Api Endpoint")
+    request_body: String! @doc(descrition: "Request Body")
+    response_body: String! @doc(descrition: "Response Body")
+    status_code: String! @doc(descrition: "Status Code")
+    ): AddLogsOutput @resolver(class: "Mode\\Gqmode\\Model\\Resolver\\AddLogsResolver") @doc(description: "The Sales Order query returns information about a Sales order")
+}
+
+type AddLogsOutput @doc(description: "AddLogs Output") {
+    status_code: Int @doc(description: "Status Code")
+    success_message: String @doc(description: "Success Message")
+}
